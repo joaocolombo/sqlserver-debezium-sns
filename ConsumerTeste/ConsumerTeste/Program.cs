@@ -1,27 +1,41 @@
-﻿using Google.Api.Gax;
-using Google.Cloud.PubSub.V1;
+﻿
+using Amazon;
+using Amazon.Runtime;
+using Amazon.SQS;
+using Amazon.SQS.Model;
 
-var projectId = "meu-projeto-local";
-var subscriptionId = "cdcserver.CadastroDB.dbo.pessoa.sub";
+var credentials = new BasicAWSCredentials("test", "test");
 
-Environment.SetEnvironmentVariable(
-    "PUBSUB_EMULATOR_HOST",
-    "localhost:8085");
+var sqs = new AmazonSQSClient(
+    credentials,
+    new AmazonSQSConfig
+    {
+        ServiceURL = "http://localhost:4566",
+        AuthenticationRegion = "us-east-1"
+    });
 
-var builder = new SubscriberClientBuilder
+
+string queueUrl = "http://localhost:4566/000000000000/fila-dados-pessoa";
+
+Console.WriteLine("Consumindo mensagens...");
+
+while (true)
 {
-    EmulatorDetection = EmulatorDetection.EmulatorOnly,
-    SubscriptionName = SubscriptionName.FromProjectSubscription(
-        projectId,
-        subscriptionId)
-};
+    var response = await sqs.ReceiveMessageAsync(new ReceiveMessageRequest
+    {
+        QueueUrl = queueUrl,
+        MaxNumberOfMessages = 10,
+        WaitTimeSeconds = 20,
+        VisibilityTimeout = 30
+    });
 
+    foreach (var message in response.Messages)
+    {
+        Console.WriteLine("--------------------------------");
+        Console.WriteLine(message.Body);
+        Console.WriteLine("--------------------------------");
 
-var subscriber = await builder.BuildAsync();
-
-await subscriber.StartAsync((message, ct) =>
-{
-    Console.WriteLine("============");
-    Console.WriteLine(message.Data.ToStringUtf8());
-    return Task.FromResult(SubscriberClient.Reply.Ack);
-});
+        // Remove a mensagem da fila
+        await sqs.DeleteMessageAsync(queueUrl, message.ReceiptHandle);
+    }
+}

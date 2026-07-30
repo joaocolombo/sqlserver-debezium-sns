@@ -45,12 +45,14 @@ services:
     ports:
       - "4566:4566"
     environment:
-      SERVICES: sns
+      SERVICES: sns,sqs
       DEFAULT_REGION: us-east-1
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
     volumes:
       - ./localstack/init-sns.sh:/etc/localstack/init/ready.d/init-sns.sh:ro
+    networks:
+      - cdc-network
 
   debezium-server:
     image: quay.io/debezium/server:3.6.0.Final
