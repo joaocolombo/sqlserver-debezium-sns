@@ -15,7 +15,7 @@ var sqs = new AmazonSQSClient(
     });
 
 
-string queueUrl = "http://localhost:4566/000000000000/fila-dados-pessoa";
+string queueUrl = "http://localhost:4566/000000000000/fila-dados-pessoa2";
 
 Console.WriteLine("Consumindo mensagens...");
 
